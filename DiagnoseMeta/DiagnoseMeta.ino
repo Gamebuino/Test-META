@@ -1,5 +1,7 @@
 #include <Gamebuino-Meta.h>
 
+#define VERSION "1.0.0"
+
 Image buttonsIcons = Image(Gamebuino_Meta::buttonsIconsData);
 Image arrowsIcons = Image(Gamebuino_Meta::arrowsIconsData);
 
@@ -13,10 +15,8 @@ void loop() {
   gb.display.clear();
 
   drawLights();
+  drawVersion();
   drawButtons();
-  draw13();
-  drawSound();
-  //drawSDCS();
 }
 
 void drawButtons() {
@@ -98,21 +98,21 @@ void drawButtons() {
 }
 
 void drawLights() {
-  switch ((gb.frameCount / 20) % 5) {
+  switch ((gb.frameCount / 10) % 5) {
     case 0:
-      gb.lights.fill((Color)0x39E7); //white
+      gb.lights.fill((Color)0x1082); //white
       gb.display.fill((Color)0x39E7); //white
       break;
     case 1:
-      gb.lights.fill((Color)0x7800); //red
+      gb.lights.fill((Color)0x2000); //red
       gb.display.fill((Color)0x7800); //red
       break;
     case 2:
-      gb.lights.fill((Color)0x03E0); //green
+      gb.lights.fill((Color)0x0100); //green
       gb.display.fill((Color)0x03E0); //green
       break;
     case 3:
-      gb.lights.fill((Color)0x000F); //blue
+      gb.lights.fill((Color)0x0004); //blue
       gb.display.fill((Color)0x000F); //blue
       break;
     case 4:
@@ -120,6 +120,21 @@ void drawLights() {
       gb.display.fill((Color)0x0000); //black
       break;
   }
+}
+
+void drawVersion() {
+  gb.display.print("TEST: ");
+  gb.display.println(VERSION);
+
+  gb.display.print("BOOT: ");
+  uint16_t bootloader_major = gb.bootloader.version() >> 16;
+  uint8_t bootloader_minor = gb.bootloader.version() >> 8;
+  uint8_t bootloader_patch = gb.bootloader.version();
+  gb.display.print(bootloader_major);
+  gb.display.print(".");
+  gb.display.print(bootloader_minor);
+  gb.display.print(".");
+  gb.display.println(bootloader_patch);
 }
 
 void draw13() {
@@ -138,8 +153,8 @@ void drawSDCS() {
   digitalWrite(SD_CS, HIGH);
 }
 
-void drawSound(){
-  if((gb.frameCount%25) == 0){
+void drawSound() {
+  if ((gb.frameCount % 75) == 0) {
     gb.sound.playOK();
   }
 }
