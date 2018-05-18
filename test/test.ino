@@ -1,12 +1,100 @@
 #include <Gamebuino-Meta.h>
 
-#define VERSION "1.0.0"
+#define VERSION "1.1.0"
 
 Image buttonsIcons = Image(Gamebuino_Meta::buttonsIconsData);
 Image arrowsIcons = Image(Gamebuino_Meta::arrowsIconsData);
 
+char nameBuffer[512];
+void rmdir(File& f) {
+  if (!f.isDir()) {
+    f.remove();
+    return;
+  }
+  f.rmRfStar();
+  f.rmdir();
+}
+void rmdir(char* dir) {
+  SerialUSB.print("Del request: ");
+  SerialUSB.print(dir);
+  SerialUSB.print(" ");
+  SerialUSB.println(strlen(dir));
+  File f = SD.open(dir, O_READ | O_WRITE);
+  if (!f) {
+    f = SD.open(dir);
+  }
+  rmdir(f);
+}
+
+void rmDotfiles(File &f, uint8_t depth = 0) {
+  if (!f.isDir()) {
+    SerialUSB.println("not a directory");
+    return;
+  }
+  File entry;
+  uint16_t i = 0;
+  if (depth == 0) {
+    nameBuffer[0] = '\0';
+  }
+  uint16_t n = strlen(nameBuffer);
+  nameBuffer[n] = '/';
+  nameBuffer[n+1] = '\0';
+  n++;
+  while (entry = f.openNextFile()) {
+    entry.getName(nameBuffer + n, 512 - n);
+    if (nameBuffer[n] == '.') {
+      rmdir(nameBuffer);
+    } else if (entry.isDir()) {
+      rmDotfiles(entry, 1);
+    }
+    i++;
+  }
+}
+
+void sanitiseSd() {
+  gb.display.clear();
+  gb.display.println("Sanitising SD card..");
+  gb.updateDisplay();
+  SD.chdir("/");
+    
+  // first delete an existing SETTINGS.SAV
+  if (SD.exists("/SETTINGS.SAV")) {
+    gb.display.print("Deleting SETTINGS.SAV...");
+    gb.updateDisplay();
+    rmdir("/SETTINGS.SAV");
+    gb.display.println("Done");
+  }
+  if (SD.exists("/loader")) {
+    gb.display.print("Deleting loader folder...");
+    gb.updateDisplay();
+    rmdir("/loader");
+    gb.display.println("Done");
+  }
+  gb.display.print("Deleting dotfiles...");
+  gb.updateDisplay();
+  File f = SD.open("/");
+  rmDotfiles(f);
+  f = SD.open("/");
+  File entry;
+  nameBuffer[0] = '/';
+  while (entry = f.openNextFile()) {
+    entry.getName(nameBuffer + 1, 512 - 1);
+    SD.rmdir(nameBuffer);
+  }
+  gb.display.println("Done");
+  gb.updateDisplay();
+}
+
 void setup() {
   gb.begin();
+//  SerialUSB.begin(115200);
+//  while(!SerialUSB);
+  if (!gb.sdInited) {
+    gb.display.clear();
+    gb.display.println("ERROR: Couldn't find SD card. Please restart console");
+    while(1)gb.update();
+  }
+  sanitiseSd();
   gb.sound.playTick();
 }
 
@@ -158,4 +246,3 @@ void drawSound() {
     gb.sound.playOK();
   }
 }
-
