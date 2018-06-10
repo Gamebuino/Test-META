@@ -1,6 +1,6 @@
 #include <Gamebuino-Meta.h>
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 
 Image buttonsIcons = Image(Gamebuino_Meta::buttonsIconsData);
 Image arrowsIcons = Image(Gamebuino_Meta::arrowsIconsData);
@@ -89,12 +89,9 @@ void setup() {
   gb.begin();
 //  SerialUSB.begin(115200);
 //  while(!SerialUSB);
-  if (!gb.sdInited) {
-    gb.display.clear();
-    gb.display.println("ERROR: Couldn't find SD card. Please restart console");
-    while(1)gb.update();
+  if (gb.sdInited) {
+    sanitiseSd();
   }
-  sanitiseSd();
   gb.sound.playTick();
 }
 
@@ -223,6 +220,14 @@ void drawVersion() {
   gb.display.print(bootloader_minor);
   gb.display.print(".");
   gb.display.println(bootloader_patch);
+  
+  if (gb.sdInited) {
+    gb.display.setColor(GREEN);
+    gb.display.println("SD found");
+  } else {
+    gb.display.setColor(RED);
+    gb.display.println("No SD found");
+  }
 }
 
 void draw13() {
